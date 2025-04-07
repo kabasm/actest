@@ -11,3 +11,10 @@ configMapGenerator:
 generatorOptions:
   annotations:
     argocd.argoproj.io/sync-wave: "0"
+- name: grafana-ini
+  files:
+    - grafana.ini=./grafana-config.ini
+    - datasource.yaml=./grafana-datasource.yaml
+generatorOptions:
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"

@@ -1,0 +1,6 @@
+image:
+  registry: docker.io
+  repository: asmm/grafana
+  tag: 11.5.2
+
+headlessService: true
