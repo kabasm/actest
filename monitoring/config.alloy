@@ -1,0 +1,111 @@
+logging {
+    level  = "debug"
+    format = "logfmt"
+}
+
+// --------------- collectors setup -----------------------
+otelcol.receiver.otlp "otel_receiver" {
+    grpc { }
+    http { }
+
+    output {
+        logs = [otelcol.processor.batch.otel_batch_processor.input]
+        metrics = [otelcol.processor.batch.otel_batch_processor.input]
+        traces = [otelcol.processor.batch.otel_batch_processor.input]
+    }
+}
+
+otelcol.processor.batch "otel_batch_processor" {
+    output {
+        logs = [otelcol.exporter.loki.otel_loki_exporter.input]
+        metrics = [otelcol.exporter.prometheus.otel_mimir_exporter.input]
+        traces = [otelcol.exporter.otlp.otel_tempo_exporter.input]
+    }
+}
+
+// --------------- logs setup ------------------
+otelcol.exporter.loki "otel_loki_exporter" {
+    forward_to = [loki.write.loki_write.receiver]
+}
+
+loki.write "loki_write" {
+    endpoint {
+        url = "http://grafana-loki-gateway:80/loki/api/v1/push"
+    }
+}
+
+// --------------- metrics setup ------------------
+otelcol.exporter.prometheus "otel_mimir_exporter" {
+  forward_to = [prometheus.remote_write.mimir_write.receiver]
+}
+prometheus.remote_write "mimir_write" {
+    endpoint {
+        url = "http://grafana-mimir-nginx:80/api/v1/push"
+    }
+}
+
+// --------------- tracing setup ------------------
+otelcol.exporter.otlp "otel_tempo_exporter" {
+    client {
+        endpoint = "http://grafana-tempo-distributor:4317"
+        tls {
+            insecure             = true
+            insecure_skip_verify = true
+        }
+    } 
+}
+
+// -------------- k8s scraping setup --------------
+discovery.kubernetes "nods" {
+    role = "node"
+}
+prometheus.scrape "nods" {
+    targets = discovery.kubernetes.nods.targets
+    forward_to = [prometheus.remote_write.mimir_write.receiver]
+}
+discovery.kubernetes "services" {
+    role = "service"
+}
+discovery.relabel "filter_services" {
+    targets = discovery.kubernetes.services.targets
+
+    rule {
+        action = "drop"
+        source_labels = ["__meta_kubernetes_service_label_ServiceApp"]
+        regex = "true"
+    }
+}
+prometheus.scrape "services" {
+    targets = discovery.relabel.filter_services.output
+    forward_to = [prometheus.remote_write.mimir_write.receiver]
+}
+discovery.kubernetes "pods" {
+    role = "pod"
+}
+discovery.relabel "filter_pods" {
+    targets = discovery.kubernetes.pods.targets
+
+    rule {
+        action = "drop"
+        source_labels = ["__meta_kubernetes_pod_label_ServiceApp"]
+        regex = "true"
+    }
+}
+prometheus.scrape "pods" {
+    targets = discovery.relabel.filter_pods.output
+    forward_to = [prometheus.remote_write.mimir_write.receiver]
+}
+discovery.kubernetes "endpoints" {
+    role = "endpoint"
+}
+prometheus.scrape "endpoints" {
+    targets = discovery.kubernetes.endpoints.targets
+    forward_to = [prometheus.remote_write.mimir_write.receiver]
+}
+discovery.kubernetes "ingresses" {
+    role = "ingress"
+}
+prometheus.scrape "ingresses" {
+    targets = discovery.kubernetes.ingresses.targets
+    forward_to = [prometheus.remote_write.mimir_write.receiver]
+}

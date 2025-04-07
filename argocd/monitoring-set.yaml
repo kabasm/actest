@@ -1,0 +1,36 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: monitoring
+  namespace: argocd
+spec:
+  generators:
+    - git:
+        repoURL: https://github.com/kabasm/actest.git
+        revision: dev
+        directories:
+          - path: monitoring/charts/*
+  template:
+    metadata:
+      name: '{{path.basename}}'
+      annotations:
+        argocd.argoproj.io/sync-wave: "1"
+    spec:
+      project: monitoring
+      source:
+        repoURL: https://github.com/kabasm/actest.git
+        targetRevision: dev
+        path: '{{path}}'
+        helm:
+          releaseName: '{{path.basename}}'
+          valueFiles:
+            - values-override.yaml
+      destination:
+        server: https://kubernetes.default.svc
+        namespace: monitoring
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+        syncOptions:
+          - CreateNamespace=true

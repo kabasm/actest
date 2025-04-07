@@ -1,0 +1,12 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: monitoring
+  namespace: argocd
+spec:
+  description: Project for monitoring stack (Grafana, Alloy, Tempo)
+  sourceRepos:
+    - https://github.com/kabasm/actest.git
+  destinations:
+    - namespace: monitoring
+      server: https://kubernetes.default.svc

@@ -1,0 +1,14 @@
+alloy:
+  configMap:
+    create: false
+    name: "alloy-config"
+    key: "config.alloy"
+  extraPorts:
+  - name: "grpc-otlp"
+    port: 4317
+    targetPort: 4317
+    protocol: "TCP"
+image:
+  registry: "docker.io"
+  repository: asmm/alloy
+  tag: v1.7.5
