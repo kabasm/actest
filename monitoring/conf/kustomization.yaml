@@ -12,6 +12,3 @@ configMapGenerator:
   # see https://grafana.com/docs/alloy/latest/configure/kubernetes/#kustomize-considerations
   options:
     disableNameSuffixHash: true
-- name: grafana
-  files:
-    - datasource.yaml=./grafana-datasource.yaml

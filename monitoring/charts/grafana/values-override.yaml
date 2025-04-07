@@ -3,4 +3,33 @@ image:
   repository: asmm/grafana
   tag: 11.5.2
 
+datasources:
+  datasources.yaml:
+    apiVersion: 1
+    datasources:
+    - isDefault: false
+      name: Loki
+      type: loki
+      uid: loki
+      url: http://grafana-loki-gateway
+    - isDefault: true
+      name: Mimir
+      type: prometheus
+      uid: prom
+      url: http://grafana-mimir-nginx/prometheus
+    - isDefault: false
+      jsonData:
+        lokiSearch:
+          datasourceUid: loki
+        serviceMap:
+          datasourceUid: prom
+        tracesToLogsV2:
+          datasourceUid: loki
+        tracesToMetrics:
+          datasourceUid: prom
+      name: Tempo
+      type: tempo
+      uid: tempo
+      url: http://grafana-tempo-query-frontend:3100
+
 headlessService: true
