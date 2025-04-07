@@ -14,5 +14,4 @@ configMapGenerator:
     disableNameSuffixHash: true
 - name: grafana
   files:
-    - grafana.ini=./grafana-config.ini
     - datasource.yaml=./grafana-datasource.yaml
